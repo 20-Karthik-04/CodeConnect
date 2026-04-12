@@ -23,7 +23,16 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: `Unsupported language: ${language}` });
     }
 
-    const sourceCode = files?.[0]?.content || "";
+    let sourceCode = files?.[0]?.content || "";
+
+    // JDoodle requires the Java public class to be named exactly "Main".
+    // Rename whatever class the user wrote (e.g. "Solution") to "Main".
+    if (language === "java") {
+      sourceCode = sourceCode.replace(
+        /\bclass\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/,
+        "class Main {"
+      );
+    }
 
     const response = await fetch(JDOODLE_API, {
       method: "POST",
