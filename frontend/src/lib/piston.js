@@ -1,6 +1,5 @@
-// Piston API is a service for code execution
-
-const PISTON_API = "https://emkc.org/api/v2/piston";
+// Code execution is proxied through our backend to avoid CORS/auth issues with Piston
+const EXECUTE_API = `${import.meta.env.VITE_API_URL}/api/execute`;
 
 const LANGUAGE_VERSIONS = {
   javascript: { language: "javascript", version: "18.15.0" },
@@ -24,7 +23,7 @@ export async function executeCode(language, code) {
       };
     }
 
-    const response = await fetch(`${PISTON_API}/execute`, {
+    const response = await fetch(EXECUTE_API, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
