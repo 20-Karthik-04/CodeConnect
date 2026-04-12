@@ -3,56 +3,55 @@ import { ENV } from "../lib/env.js";
 
 const router = express.Router();
 
-const JUDGE0_API = "https://judge0-ce.p.rapidapi.com";
+const JDOODLE_API = "https://api.jdoodle.com/v1/execute";
 
-// Judge0 language IDs (matching Piston language names used in frontend)
-const LANGUAGE_IDS = {
-  javascript: 63,  // Node.js 12.14.0
-  python: 71,      // Python 3.8.1
-  java: 62,        // Java OpenJDK 13.0.1
+// JDoodle language config (matching Piston language names used in frontend)
+const LANGUAGE_CONFIG = {
+  javascript: { language: "nodejs",  versionIndex: "4" },
+  python:     { language: "python3", versionIndex: "4" },
+  java:       { language: "java",    versionIndex: "4" },
 };
 
 // POST /api/execute
-// Proxies code execution to Judge0 CE (replaces Piston which now requires paid auth)
+// Proxies code execution to JDoodle Compiler API (free tier, no credit card needed)
 router.post("/", async (req, res) => {
   try {
     const { language, files } = req.body;
 
-    const languageId = LANGUAGE_IDS[language];
-    if (!languageId) {
+    const config = LANGUAGE_CONFIG[language];
+    if (!config) {
       return res.status(400).json({ error: `Unsupported language: ${language}` });
     }
 
     const sourceCode = files?.[0]?.content || "";
 
-    // Submit to Judge0 with wait=true for synchronous response
-    const response = await fetch(`${JUDGE0_API}/submissions?base64_encoded=false&wait=true`, {
+    const response = await fetch(JDOODLE_API, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-rapidapi-key": ENV.JUDGE0_API_KEY,
-        "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        source_code: sourceCode,
-        language_id: languageId,
+        clientId:     ENV.JDOODLE_CLIENT_ID,
+        clientSecret: ENV.JDOODLE_CLIENT_SECRET,
+        script:       sourceCode,
+        language:     config.language,
+        versionIndex: config.versionIndex,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       return res.status(response.status).json({
-        error: `Judge0 API error: ${response.status} - ${errorText}`,
+        error: `JDoodle API error: ${response.status} - ${errorText}`,
       });
     }
 
     const data = await response.json();
 
-    // Normalise Judge0 response to match the Piston format the frontend expects
+    // Normalise JDoodle response to the { run: { output, stderr } } shape
+    // that the frontend already expects (same as old Piston format)
     return res.json({
       run: {
-        output: data.stdout || "",
-        stderr: data.stderr || data.compile_output || "",
+        output: data.output || "",
+        stderr: "",          // JDoodle merges stderr into output
       },
     });
   } catch (error) {
