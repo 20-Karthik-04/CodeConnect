@@ -1,5 +1,5 @@
 // Code execution is proxied through our backend to avoid CORS/auth issues with Piston
-const EXECUTE_API = `${import.meta.env.VITE_API_URL}/api/execute`;
+const EXECUTE_API = `${import.meta.env.VITE_API_URL}/execute`;
 
 const LANGUAGE_VERSIONS = {
   javascript: { language: "javascript", version: "18.15.0" },
