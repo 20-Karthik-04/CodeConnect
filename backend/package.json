@@ -19,7 +19,10 @@
     "express": "^5.1.0",
     "inngest": "^3.44.3",
     "mongoose": "^8.19.1",
-    "stream-chat": "^9.24.0"
+    "stream-chat": "^9.24.0",
+    "ws": "^8.20.0",
+    "y-websocket": "^1.5.3",
+    "yjs": "^13.6.30"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
